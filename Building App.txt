@@ -1,0 +1,17 @@
+Building App
+
+Git:
+git add .
+git commit -m "Message"
+git push origin main
+
+Docker:
+docker build -t image-name .
+docker tag image-name registry.heroku.com/app-name/web
+docker push registry.heroku.com/app-name/web
+
+Heroku:
+heroku container:login
+heroku container:release web -a app-name
+heroku open -a app-name
+heroku logs --tail -a app-name
