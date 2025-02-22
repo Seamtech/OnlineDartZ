@@ -1,9 +1,34 @@
 Building App
 
-Git:
+# For Dartz-Front-Web
+cd Dartz-Front-Web
+git pull origin main
 git add .
-git commit -m "Message"
+git commit -m "Your commit message for Dartz-Front-Web"
 git push origin main
+cd ..
+
+# For Dartz-Back-Rest
+cd Dartz-Back-Rest
+git pull origin main
+git add .
+git commit -m "Your commit message for Dartz-Back-Rest"
+git push origin main
+cd ..
+
+# For Dartz-Back-WS
+cd Dartz-Back-WS
+git pull origin main
+git add .
+git commit -m "Your commit message for Dartz-Back-WS"
+git push origin main
+cd ..
+
+#Update the submodule references in the main repository:
+
+#From main (OnlineDartz) directory:
+git add Dartz-Front-Web Dartz-Back-Rest Dartz-Back-WS
+git commit -m "Updated submodule references"
 
 Docker:
 docker build -t image-name .

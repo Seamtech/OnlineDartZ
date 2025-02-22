@@ -1,0 +1,142 @@
+-- Tournaments table with additional entry fee type
+CREATE TABLE dartz.tournaments (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    scheduled_start TIMESTAMP NOT NULL,
+    max_players INTEGER NOT NULL,
+    created_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_by INTEGER REFERENCES dartz.player_profiles(id) ON DELETE SET NULL,
+    updated_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_by INTEGER REFERENCES dartz.player_profiles(id) ON DELETE SET NULL,
+    tournament_type VARCHAR(50),
+    platform VARCHAR(50),
+    entry_fee_amount DECIMAL(10, 2),
+    entry_fee_type CHARACTER VARYING(5),
+    UNIQUE (name)
+);
+
+-- Indexes
+CREATE INDEX idx_tournament_created_by ON dartz.tournaments(created_by);
+CREATE INDEX idx_tournament_scheduled_start ON dartz.tournaments(scheduled_start);
+
+-- Tournament teams table with audit fields
+CREATE TABLE dartz.tournament_teams (
+    id SERIAL PRIMARY KEY,
+    tournament_id INTEGER REFERENCES dartz.tournaments(id) ON UPDATE CASCADE ON DELETE CASCADE,
+    name VARCHAR(255) NOT NULL,
+    description VARCHAR(255),
+    player_count INTEGER DEFAULT 1,
+    created_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_by INTEGER REFERENCES dartz.player_profiles(id) ON DELETE SET NULL,
+    updated_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_by INTEGER REFERENCES dartz.player_profiles(id) ON DELETE SET NULL,
+    UNIQUE (tournament_id, name)
+);
+
+CREATE INDEX idx_tournament_id ON dartz.tournament_teams(tournament_id);
+
+-- Tournament details table with audit fields
+CREATE TABLE dartz.tournament_details (
+    id SERIAL PRIMARY KEY,
+    tournament_id INTEGER REFERENCES dartz.tournaments(id) ON UPDATE CASCADE ON DELETE CASCADE,
+    tournament_status VARCHAR(50) NOT NULL,
+    current_round INTEGER,
+    actual_start TIMESTAMP,
+    completed_timestamp TIMESTAMP,
+    winning_team_id INTEGER REFERENCES dartz.tournament_teams(id) ON UPDATE CASCADE ON DELETE SET NULL,
+    updated_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    total_matches_played INTEGER DEFAULT 0,
+    total_teams_participating INTEGER DEFAULT 0,
+    UNIQUE (tournament_id)
+);
+
+-- Indexes
+CREATE INDEX idx_tournament_details_tournament_id ON dartz.tournament_details(tournament_id);
+CREATE INDEX idx_tournament_details_status ON dartz.tournament_details(tournament_status);
+CREATE INDEX idx_tournament_details_winning_team_id ON dartz.tournament_details(winning_team_id);
+
+-- Tournament team players table with is_captain, join_date, and audit fields
+CREATE TABLE dartz.tournament_team_players (
+    id SERIAL PRIMARY KEY,
+    team_id INTEGER REFERENCES dartz.tournament_teams(id) ON UPDATE CASCADE ON DELETE CASCADE,
+    player_id INTEGER REFERENCES dartz.player_profiles(id) ON UPDATE CASCADE ON DELETE CASCADE,
+    is_captain BOOLEAN DEFAULT FALSE,
+    join_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_by INTEGER REFERENCES dartz.player_profiles(id) ON DELETE SET NULL,
+    updated_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_by INTEGER REFERENCES dartz.player_profiles(id) ON DELETE SET NULL,
+    UNIQUE (team_id, player_id)
+);
+
+CREATE INDEX idx_team_id ON dartz.tournament_team_players(team_id);
+CREATE INDEX idx_player_id ON dartz.tournament_team_players(player_id);
+
+-- Tournament match table with audit fields
+CREATE TABLE dartz.tournament_match (
+    id SERIAL PRIMARY KEY,
+    tournament_id INTEGER REFERENCES dartz.tournaments(id) ON UPDATE CASCADE ON DELETE CASCADE,
+    match_start TIMESTAMP NOT NULL,
+    match_end TIMESTAMP,
+    match_status VARCHAR(50) NOT NULL,
+    tournament_round INTEGER,
+    type VARCHAR(50),
+    location_id INTEGER REFERENCES dartz.locations(id) ON DELETE SET NULL,
+    created_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_by INTEGER REFERENCES dartz.player_profiles(id) ON DELETE SET NULL,
+    updated_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_by INTEGER REFERENCES dartz.player_profiles(id) ON DELETE SET NULL
+);
+
+CREATE INDEX idx_tournament_match_tournament_id ON dartz.tournament_match(tournament_id);
+CREATE INDEX idx_tournament_match_location_id ON dartz.tournament_match(location_id);
+
+-- Tournament match teams table with is_winner and audit fields
+CREATE TABLE dartz.tournament_match_teams (
+    id SERIAL PRIMARY KEY,
+    tournament_match_id INTEGER REFERENCES dartz.tournament_match(id) ON UPDATE CASCADE ON DELETE CASCADE,
+    tournament_team_id INTEGER REFERENCES dartz.tournament_teams(id) ON UPDATE CASCADE ON DELETE CASCADE,
+    is_winner BOOLEAN DEFAULT FALSE,
+    created_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_by INTEGER REFERENCES dartz.player_profiles(id) ON DELETE SET NULL,
+    updated_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_by INTEGER REFERENCES dartz.player_profiles(id) ON DELETE SET NULL,
+    UNIQUE (tournament_match_id, tournament_team_id)
+);
+
+CREATE INDEX idx_tournament_match_id ON dartz.tournament_match_teams(tournament_match_id);
+CREATE INDEX idx_tournament_team_id ON dartz.tournament_match_teams(tournament_team_id);
+
+-- Tournament match results table with audit fields
+CREATE TABLE dartz.tournament_match_results (
+    id SERIAL PRIMARY KEY,
+    tournament_match_id INTEGER REFERENCES dartz.tournament_match(id) ON UPDATE CASCADE ON DELETE CASCADE,
+    winning_team_id INTEGER REFERENCES dartz.tournament_teams(id) ON UPDATE CASCADE ON DELETE CASCADE,
+    winning_score INTEGER,
+    losing_team_id INTEGER REFERENCES dartz.tournament_teams(id) ON UPDATE CASCADE ON DELETE CASCADE,
+    losing_score INTEGER,
+    match_duration INTERVAL,
+    created_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_by INTEGER REFERENCES dartz.player_profiles(id) ON DELETE SET NULL,
+    updated_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_by INTEGER REFERENCES dartz.player_profiles(id) ON DELETE SET NULL,
+    UNIQUE (tournament_match_id)
+);
+
+-- Tournament player results table with audit fields
+CREATE TABLE dartz.tournament_player_results (
+    id SERIAL PRIMARY KEY,
+    player_id INTEGER REFERENCES dartz.player_profiles(id) ON UPDATE CASCADE ON DELETE CASCADE,
+    tournament_match_id INTEGER REFERENCES dartz.tournament_match(id) ON UPDATE CASCADE ON DELETE CASCADE,
+    mpr DOUBLE PRECISION,  -- Marks per Round
+    ppd DOUBLE PRECISION,  -- Points per Dart
+    games_played INTEGER DEFAULT 0,
+    games_won INTEGER DEFAULT 0,
+    games_lost INTEGER DEFAULT 0,
+    created_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_by INTEGER REFERENCES dartz.player_profiles(id) ON DELETE SET NULL,
+    updated_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_by INTEGER REFERENCES dartz.player_profiles(id) ON DELETE SET NULL,
+    UNIQUE (player_id, tournament_match_id)
+);
