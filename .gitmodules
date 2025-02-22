@@ -1,9 +1,0 @@
-[submodule "dartz-front-web"]
-	path = dartz-front-web
-	url = https://github.com/seamtech/dartz-front-web
-[submodule "dartz-back-rest"]
-	path = dartz-back-rest
-	url = https://github.com/seamtech/dartz-back-rest
-[submodule "dartz-back-ws"]
-	path = dartz-back-ws
-	url = https://github.com/seamtech/dartz-back-ws
